@@ -1,4 +1,7 @@
 from __future__ import annotations
+from pathlib import Path
+from homeassistant.components import frontend
+from homeassistant.components.http import StaticPathConfig
 
 import logging
 from datetime import timedelta
@@ -69,6 +72,36 @@ async def _register_services(hass: HomeAssistant) -> None:
     hass.services.async_register(DOMAIN, SERVICE_WRITE_PROGRAM, write_program, schema=WRITE_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_READ_MODE, read_mode, schema=ADDRESS_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_SET_MODE, set_mode, schema=MODE_SCHEMA)
+
+
+FRONTEND_URL = "/talento-smart/talento-smart-card.js"
+FRONTEND_VERSION = "1.1.0"
+
+
+async def _async_register_frontend(hass: HomeAssistant) -> None:
+    """Serve and load the bundled Lovelace card automatically."""
+    frontend_file = Path(__file__).parent / "frontend" / "talento-smart-card.js"
+
+    await hass.http.async_register_static_paths(
+        [
+            StaticPathConfig(
+                FRONTEND_URL,
+                str(frontend_file),
+                False,
+            )
+        ]
+    )
+
+    frontend.add_extra_js_url(
+        hass,
+        f"{FRONTEND_URL}?v={FRONTEND_VERSION}",
+    )
+
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up Talento Smart."""
+    await _async_register_frontend(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
