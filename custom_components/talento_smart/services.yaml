@@ -1,0 +1,67 @@
+read_program:
+  name: Hent timerprogram
+  description: Henter og dekoder programmet fra en Talento Smart via Bluetooth.
+  fields:
+    address:
+      name: Bluetooth-adresse
+      required: true
+      selector:
+        text:
+
+sync_time:
+  name: Synkroniser tid
+  description: Sender Home Assistants aktuelle tid til Talento Smart.
+  fields:
+    address:
+      name: Bluetooth-adresse
+      required: true
+      selector:
+        text:
+
+write_program:
+  name: Skriv timerprogram
+  description: >-
+    Tager først JSON-backup, skriver programmet med den HCI-verificerede Talento
+    Smart BLE-sekvens og verificerer derefter programmet via read-back.
+  fields:
+    address:
+      name: Bluetooth-adresse
+      required: true
+      selector:
+        text:
+    program:
+      name: Programdata
+      required: true
+      selector:
+        object:
+
+
+read_mode:
+  name: Hent driftstilstand
+  description: Læser AUTO/OVR/FIX ON/FIX OFF for kanal 1.
+  fields:
+    address:
+      name: Bluetooth-adresse
+      required: true
+      selector:
+        text:
+
+set_mode:
+  name: Sæt driftstilstand
+  description: Sætter kanal 1 til AUTO, OVR, FIX ON eller FIX OFF.
+  fields:
+    address:
+      name: Bluetooth-adresse
+      required: true
+      selector:
+        text:
+    mode:
+      name: Driftstilstand
+      required: true
+      selector:
+        select:
+          options:
+            - AUTO
+            - OVR
+            - FIX ON
+            - FIX OFF
