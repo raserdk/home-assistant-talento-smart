@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.1.0 — 2026-08-10
+
+### Changed
+
+- Bundled `talento-smart-card.js` inside the integration package
+- Home Assistant serves the frontend file directly with `async_register_static_paths`
+- Home Assistant loads the custom card automatically with `frontend.add_extra_js_url`
+- HACS setup is now **install → restart → add integration → finished**
+- No `/config/www/` copy is required
+- No manual Lovelace Resource is required
+
+### Unchanged
+
+- BLE protocol and UUIDs
+- HCI-verified ~600 ms write pacing
+- program read/write and read-back verification
+- time synchronization
+- AUTO / OVR / FIX ON / FIX OFF
+
 ## 1.0.1 — 2026-08-10
 
 Maintenance release.
