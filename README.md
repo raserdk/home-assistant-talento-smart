@@ -15,11 +15,7 @@ The integration was built by reverse-engineering the official Android app and va
 - Automatic JSON backup before every program write
 - Read-back verification after every program write
 - Time synchronization from Home Assistant to the timer
-- Operating modes:
-  - AUTO
-  - OVR
-  - FIX ON
-  - FIX OFF
+- Operating modes: AUTO, OVR, FIX ON and FIX OFF
 - Custom Lovelace program editor card
 - Diagnostic write-status sensor
 - Per-device BLE operation locking to avoid overlapping GATT sessions
@@ -27,73 +23,27 @@ The integration was built by reverse-engineering the official Android app and va
 
 ## Tested scope
 
-Version 1.0.0 has been tested with Talento Smart devices using one program and channel 1.
+Version 1.0.1 has been tested with Talento Smart devices using one program and channel 1.
 
-The current encoder supports:
+The current encoder supports normal ON/OFF clock events, sunset-based events, weekday masks, program name and program priority. Date-range program features are not currently implemented.
 
-- normal ON/OFF clock events
-- sunset-based events
-- weekday masks
-- program name
-- program priority
+## Installation via HACS
 
-Date-range program features are not currently implemented.
+1. Open **HACS → Integrations**.
+2. Open the menu and choose **Custom repositories**.
+3. Add `https://github.com/raserdk/home-assistant-talento-smart` as category **Integration**.
+4. Install **Talento Smart** and restart Home Assistant.
+5. Add the integration under **Settings → Devices & services → Add integration → Talento Smart**.
 
-## Installation
-
-### 1. Copy the integration
-
-Copy:
+The custom Lovelace card is currently installed manually. Copy `www/talento-smart-card.js` to `/config/www/talento-smart-card.js`, then add this JavaScript module resource:
 
 ```text
-custom_components/talento_smart/
+/local/talento-smart-card.js?v=1.0.1
 ```
 
-to:
+## Manual installation
 
-```text
-/config/custom_components/talento_smart/
-```
-
-### 2. Copy the Lovelace card
-
-Copy:
-
-```text
-www/talento-smart-card.js
-```
-
-to:
-
-```text
-/config/www/talento-smart-card.js
-```
-
-### 3. Restart Home Assistant
-
-Perform a full Home Assistant restart after installing or updating the integration.
-
-### 4. Add the integration
-
-Go to:
-
-**Settings → Devices & services → Add integration → Talento Smart**
-
-If the device is visible in Home Assistant Bluetooth advertisements, it should appear automatically. It can also be added manually by Bluetooth address.
-
-### 5. Add the Lovelace resource
-
-Add this JavaScript module resource:
-
-```text
-/local/talento-smart-card.js?v=1.0.0
-```
-
-Resource type:
-
-```text
-JavaScript Module
-```
+Copy `custom_components/talento_smart/` to `/config/custom_components/talento_smart/` and copy `www/talento-smart-card.js` to `/config/www/talento-smart-card.js`. Restart Home Assistant, add the integration, and add the Lovelace JavaScript resource shown above.
 
 ## Lovelace card
 
@@ -107,16 +57,7 @@ mode_entity: select.my_talento_driftstilstand
 
 `mode_entity` is optional if the card can identify the matching operating-mode select automatically.
 
-The card provides:
-
-- Read program
-- Sync time
-- AUTO / OVR / FIX ON / FIX OFF
-- Program-name editing
-- Add/remove switching times
-- Weekday selection
-- Clock and sunset events
-- Write program to Talento
+The card provides program reading, time synchronization, AUTO / OVR / FIX ON / FIX OFF, program-name editing, add/remove switching times, weekday selection, clock and sunset events, and program writing.
 
 ## Safety during program writes
 
@@ -166,9 +107,7 @@ Operating state:
 EC040008-04DA-47E5-ADD4-8ED1C9D52FEC
 ```
 
-Write values:
-
-| Mode | Value |
+| Mode | Write value |
 |---|---:|
 | AUTO | `00` |
 | FIX ON | `01` |
@@ -196,13 +135,9 @@ Program block 2
 ...
 ```
 
-The integration therefore deliberately maintains roughly **600 ms from the start of one content write to the start of the next** using ATT Write Request / Write Response.
-
-Sending the packets substantially faster caused incomplete or invalid program buffers during development.
+The integration deliberately maintains roughly **600 ms from the start of one content write to the start of the next** using ATT Write Request / Write Response. Sending the packets substantially faster caused incomplete or invalid program buffers during development.
 
 ## Services
-
-The integration registers:
 
 ```text
 talento_smart.read_program
@@ -214,27 +149,13 @@ talento_smart.set_mode
 
 ## Diagnostics
 
-Useful entities include:
+Useful entities include the Timerprogram sensor, Skrivestatus sensor, Driftstilstand select, Hent timerprogram button and Synkroniser tid button.
 
-- Timerprogram sensor
-- Skrivestatus sensor
-- Driftstilstand select
-- Hent timerprogram button
-- Synkroniser tid button
-
-The write-status sensor can show:
-
-- requested program
-- expected raw blocks
-- read-back program
-- read-back raw blocks
-- byte differences
-- BLE write timing
-- program backup filename
+The write-status sensor can show the requested program, expected raw blocks, read-back program, read-back raw blocks, byte differences, BLE write timing and backup filename.
 
 ## Reverse engineering
 
-The development history and important findings are documented in:
+Development history and important findings are documented in:
 
 - [docs/REVERSE_ENGINEERING.md](docs/REVERSE_ENGINEERING.md)
 - [docs/PROTOCOL.md](docs/PROTOCOL.md)
