@@ -21,6 +21,8 @@ class TalentoSmartCard extends HTMLElement {
       return;
     }
 
+    // Do not rebuild the editor while the user is editing.
+    // Rebuilding closes Android's native time picker.
     if (this._dirty || this._editing || this._busy) return;
 
     if (st && st.last_updated !== this._lastEntityState) {
@@ -81,20 +83,26 @@ class TalentoSmartCard extends HTMLElement {
 
   _modeEntityId() {
     if (this.config?.mode_entity) return this.config.mode_entity;
+
+    // Auto-detect the Talento Driftstilstand select belonging to the same device/name.
     const programEntity = this._entity();
     const programName = (programEntity?.attributes?.friendly_name || "").toLowerCase();
     const prefix = programName.replace(/\s*timerprogram\s*$/i, "").trim();
+
     const candidates = Object.entries(this._hass?.states || {})
       .filter(([id, st]) =>
         id.startsWith("select.") &&
         (st.attributes?.friendly_name || "").toLowerCase().includes("driftstilstand")
       );
+
     if (prefix) {
       const match = candidates.find(([id, st]) =>
         (st.attributes?.friendly_name || "").toLowerCase().includes(prefix)
       );
       if (match) return match[0];
     }
+
+    // If there is only one mode select in HA, use it as fallback.
     return candidates.length === 1 ? candidates[0][0] : null;
   }
 
@@ -188,10 +196,16 @@ class TalentoSmartCard extends HTMLElement {
           .actions { display:flex; gap:8px; flex-wrap:wrap; }
           .modebar { display:flex; gap:7px; align-items:center; flex-wrap:wrap; margin-top:12px; }
           .mode-label { font-weight:600; margin-right:2px; }
-          .modebtn.mode-active { background:var(--primary-color); color:white; font-weight:700; box-shadow:inset 0 0 0 2px rgba(255,255,255,.25); }
+          .modebtn.mode-active {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 700;
+            box-shadow: inset 0 0 0 2px rgba(255,255,255,.25);
+          }
           button, select, input { font:inherit; }
           .action { border:0; border-radius:18px; padding:8px 13px; cursor:pointer; background:var(--secondary-background-color); color:var(--primary-text-color); }
           .primary { background:var(--primary-color); color:var(--text-primary-color, white); }
+          .danger { background:var(--error-color); color:white; }
           .editor { margin-top:16px; }
           .program-name { display:flex; gap:8px; align-items:center; margin-bottom:10px; }
           .program-name input { max-width:180px; padding:7px; border:1px solid var(--divider-color); border-radius:6px; background:var(--card-background-color); color:var(--primary-text-color); }
@@ -236,7 +250,8 @@ class TalentoSmartCard extends HTMLElement {
         <div class="modebar">
           <span class="mode-label">Drift:</span>
           ${["AUTO","OVR","FIX ON","FIX OFF"].map(mode => `
-            <button class="action modebtn ${this._currentMode() === mode ? "mode-active" : ""}" data-mode="${mode}" ${disabled}>${mode}</button>
+            <button class="action modebtn ${this._currentMode() === mode ? "mode-active" : ""}"
+                    data-mode="${mode}" ${disabled}>${mode}</button>
           `).join("")}
           <button class="action readmode" ${disabled}>↻</button>
         </div>
@@ -248,10 +263,13 @@ class TalentoSmartCard extends HTMLElement {
               <input class="name" maxlength="11" value="${d.program_name.replace(/"/g, "&quot;")}">
               <span>${d.switching_times.length} skiftetider</span>
             </div>
+
             ${d.switching_times.map((x,i) => this._row(x,i)).join("")}
+
             <div class="footer">
               <button class="action add" ${disabled}>＋ Tilføj skiftetid</button>
               <button class="action primary save" ${disabled}>Gem til Talento</button>
+              
             </div>
           </div>
         `}
@@ -269,6 +287,7 @@ class TalentoSmartCard extends HTMLElement {
 
   _bind() {
     const q = s => this.querySelector(s);
+
     this.querySelectorAll("input, select").forEach(el => {
       el.addEventListener("focus", () => { this._editing = true; });
       el.addEventListener("blur", () => { this._editing = false; });
@@ -276,35 +295,68 @@ class TalentoSmartCard extends HTMLElement {
     q(".read")?.addEventListener("click", () => this._service("read_program", {address:this._address()}));
     q(".sync")?.addEventListener("click", () => this._service("sync_time", {address:this._address()}));
     q(".readmode")?.addEventListener("click", () => this._service("read_mode", {address:this._address()}));
-    this.querySelectorAll(".modebtn").forEach(btn => btn.addEventListener("click", () => this._service("set_mode", {address:this._address(), mode:btn.dataset.mode})));
-    q(".name")?.addEventListener("change", e => { this._draft.program_name = e.target.value; this._markDirty(); });
+    this.querySelectorAll(".modebtn").forEach(btn => btn.addEventListener("click", () =>
+      this._service("set_mode", {address:this._address(), mode:btn.dataset.mode})
+    ));
+
+    q(".name")?.addEventListener("change", e => {
+      this._draft.program_name = e.target.value;
+      this._markDirty();
+    });
+
     this.querySelectorAll(".program-row").forEach(row => {
       const i = Number(row.dataset.index);
       const entry = this._draft.switching_times[i];
-      row.querySelector(".fn")?.addEventListener("change", e => { entry.talento_function = e.target.value; this._markDirty(true); });
-      row.querySelector(".mode")?.addEventListener("change", e => { entry.mode = e.target.value; this._markDirty(true); });
+
+      row.querySelector(".fn")?.addEventListener("change", e => {
+        entry.talento_function = e.target.value; this._markDirty(true);
+      });
+      row.querySelector(".mode")?.addEventListener("change", e => {
+        entry.mode = e.target.value; this._markDirty(true);
+      });
       const hour = row.querySelector(".hour");
       const minute = row.querySelector(".minute");
-      const updateTime = () => { if (!hour || !minute) return; entry.time = `${hour.value}:${minute.value}`; this._markDirty(); };
+      const updateTime = () => {
+        if (!hour || !minute) return;
+        entry.time = `${hour.value}:${minute.value}`;
+        this._markDirty();
+      };
       hour?.addEventListener("change", updateTime);
       minute?.addEventListener("change", updateTime);
-      row.querySelector(".offset")?.addEventListener("change", e => { entry.offset_minutes = Number(e.target.value); this._markDirty(); });
-      row.querySelector(".delete")?.addEventListener("click", () => { this._draft.switching_times.splice(i,1); this._markDirty(true); });
-      row.querySelectorAll(".day").forEach(btn => btn.addEventListener("click", () => { const bit = Number(btn.dataset.day); entry.day_mask ^= bit; this._markDirty(true); }));
+      row.querySelector(".offset")?.addEventListener("change", e => {
+        entry.offset_minutes = Number(e.target.value); this._markDirty();
+      });
+      row.querySelector(".delete")?.addEventListener("click", () => {
+        this._draft.switching_times.splice(i,1); this._markDirty(true);
+      });
+      row.querySelectorAll(".day").forEach(btn => btn.addEventListener("click", () => {
+        const bit = Number(btn.dataset.day);
+        entry.day_mask ^= bit;
+        this._markDirty(true);
+      }));
     });
+
     q(".add")?.addEventListener("click", () => {
-      this._draft.switching_times.push({ talento_function:"ON", mode:"clock", time:"12:00", offset_minutes:0, day_mask:0x7F });
+      this._draft.switching_times.push({
+        talento_function:"ON", mode:"clock", time:"12:00",
+        offset_minutes:0, day_mask:0x7F
+      });
       this._markDirty();
     });
+
     q(".save")?.addEventListener("click", async () => {
       if (!this._draft.switching_times.length) {
-        this._message = "Programmet skal have mindst én skiftetid.";
-        this.render();
-        return;
+        this._message = "Programmet skal have mindst én skiftetid."; this.render(); return;
       }
-      const ok = confirm("Skriv det viste program til Talento Smart?\n\nHome Assistant tager først backup og kontrollerer programmet med read-back efter skrivningen.");
+      const ok = confirm(
+        "Skriv det viste program til Talento Smart?\n\n" +
+        "Home Assistant tager først backup og kontrollerer programmet med read-back efter skrivningen."
+      );
       if (!ok) return;
-      await this._service("write_program", { address:this._address(), program: JSON.parse(JSON.stringify(this._draft)) });
+      await this._service("write_program", {
+        address:this._address(),
+        program: JSON.parse(JSON.stringify(this._draft))
+      });
     });
   }
 }
@@ -316,4 +368,4 @@ window.customCards.push({
   name: "Talento Smart Programeditor",
   description: "Læs, redigér og skriv Grässlin Talento Smart timerprogrammer via Home Assistant."
 });
-console.info("%c TALENTO-SMART-CARD %c v1.0.1 ", "color:white;background:#7b1fa2;font-weight:bold", "");
+console.info("%c TALENTO-SMART-CARD %c v1.1.0 ", "color:white;background:#7b1fa2;font-weight:bold", "");
