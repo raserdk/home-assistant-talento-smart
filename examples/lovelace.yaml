@@ -1,0 +1,6 @@
+# Example Talento Smart Lovelace card
+# Replace the entity IDs with your own Home Assistant entities.
+
+type: custom:talento-smart-card
+entity: sensor.my_talento_timerprogram
+mode_entity: select.my_talento_driftstilstand
