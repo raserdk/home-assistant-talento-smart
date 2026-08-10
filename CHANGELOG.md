@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.1 — 2026-08-10
+
+Maintenance release.
+
+### Changed
+
+- Removed the obsolete red experimental-write warning from the Lovelace card
+- Added `hacs.json` for HACS custom-repository installation
+- Updated the frontend cache version to `v1.0.1`
+- No BLE protocol changes
+
 ## 1.0.0 — 2026-08-10
 
 First stable baseline.
