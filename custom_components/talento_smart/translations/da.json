@@ -1,0 +1,15 @@
+{
+  "title": "Talento Smart",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tilføj Talento Smart",
+        "description": "Vælg eller indtast Talento Smart Bluetooth-adressen.",
+        "data": {
+          "address": "Bluetooth-adresse",
+          "name": "Navn"
+        }
+      }
+    }
+  }
+}
