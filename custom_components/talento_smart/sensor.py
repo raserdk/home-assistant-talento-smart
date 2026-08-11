@@ -66,7 +66,7 @@ class TalentoDecodedProgramSensor(SensorEntity):
             "summary": [item.get("display") for item in entries],
             "gatt_properties": result.get("gatt_properties", {}),
         }
-        self.async_write_ha_state()
+        self.schedule_update_ha_state()
 
 
 class TalentoWriteStatusSensor(SensorEntity):
@@ -100,4 +100,4 @@ class TalentoWriteStatusSensor(SensorEntity):
         else:
             self._attr_native_value = "Skrivning fejlede"
         self._attr_extra_state_attributes = status
-        self.async_write_ha_state()
+        self.schedule_update_ha_state()
