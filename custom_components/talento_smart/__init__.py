@@ -75,7 +75,7 @@ async def _register_services(hass: HomeAssistant) -> None:
 
 
 FRONTEND_URL = "/talento-smart/talento-smart-card.js"
-FRONTEND_VERSION = "1.1.0"
+FRONTEND_VERSION = "1.1.1"
 
 
 async def _async_register_frontend(hass: HomeAssistant) -> None:
