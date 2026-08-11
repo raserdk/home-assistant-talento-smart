@@ -48,7 +48,7 @@ class TalentoSyncTimeButton(ButtonEntity):
             "last_sent_unix": unix_seconds,
             "last_sync": datetime.now().astimezone().isoformat(),
         }
-        self.async_write_ha_state()
+        self.schedule_update_ha_state()
 
 
 class TalentoReadProgramButton(ButtonEntity):
