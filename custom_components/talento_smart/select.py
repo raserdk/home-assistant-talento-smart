@@ -69,7 +69,7 @@ class TalentoChannelModeSelect(SelectEntity):
         try:
             mode = await self._client.async_read_channel_mode(1)
             self._attr_current_option = mode
-            self.async_write_ha_state()
+            self.schedule_update_ha_state()
         except Exception:
             pass
 
@@ -82,9 +82,9 @@ class TalentoChannelModeSelect(SelectEntity):
         attrs["raw_status_hex"] = data.get("raw_hex")
         attrs["relay_status"] = data.get("relay")
         self._attr_extra_state_attributes = attrs
-        self.async_write_ha_state()
+        self.schedule_update_ha_state()
 
     async def async_select_option(self, option: str) -> None:
         mode = await self._client.async_write_channel_mode(option, 1)
         self._attr_current_option = mode
-        self.async_write_ha_state()
+        self.schedule_update_ha_state()
