@@ -9,7 +9,7 @@
   ],
   "integration_type": "device",
   "iot_class": "local_push",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "bluetooth": [
     {
       "service_uuid": "ec040000-04da-47e5-add4-8ed1c9d52fec",
